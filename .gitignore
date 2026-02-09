@@ -1,15 +1,50 @@
-*.iml
+# Gradle
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+build/
+local.properties
+
+# Android Studio / IntelliJ files
+*.iml
+.idea/
+!.idea/modules.xml          # Optional: keep if you want shared modules, but most ignore it
+!.idea/runConfigurations/   # Optional: if sharing run configs
+
+# Android Studio caches & modules
+.idea/caches/
+.idea/libraries/
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/tasks.xml
+.idea/vcs.xml
+.idea/misc.xml
+.idea/compiler.xml
+.idea/gradle.xml
+
+# macOS junk
 .DS_Store
-/build
-/captures
+
+# Build outputs & artifacts
+*.apk
+*.ap_
+*.dex
+*.class
+*.aar
+*.aab
+/captures/
+/output.json
+
+# NDK / CMake / external builds
 .externalNativeBuild
 .cxx
-local.properties
+ndkBuild/
+
+# KSP / annotation processing (common in modern projects like yours with Room/Koin)
+build/generated/ksp/
+build/generated/source/ksp/
+
+# Misc temp files
+*.log
+*.tmp
+*.bak
+*~

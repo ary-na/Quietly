@@ -41,7 +41,7 @@ fun provideDatabase(context: Context): AppDatabase {
         AppDatabase::class.java,
         "app_database"
     )
-        .fallbackToDestructiveMigration()
+        .fallbackToDestructiveMigration(false)
         .build()
 }
 

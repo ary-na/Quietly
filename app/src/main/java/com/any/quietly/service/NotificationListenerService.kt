@@ -6,7 +6,6 @@ import android.util.Log
 import com.any.quietly.data.NotificationData
 import com.any.quietly.domain.NotificationFilter
 import com.any.quietly.domain.NotificationLogger
-import com.any.quietly.repository.NotificationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,50 +13,66 @@ import org.koin.android.ext.android.inject
 
 class NotificationListenerService : NotificationListenerService() {
 
-    // Inject dependencies using Koin
-    private val notificationRepository: NotificationRepository by inject()
-    private val notificationFilter: NotificationFilter by inject()
+//    private val notificationFilter: NotificationFilter by inject()
     private val notificationLogger: NotificationLogger by inject()
 
-    // Coroutine scope for background operations
+    // Background scope for DB work
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
-        // Koin injection happens automatically when the service is created if DI is set up in Application
-        Log.d("NotificationListener", "Service created and dependencies injected via Koin")
+        Log.d("NotificationListener", "Service created")
     }
 
-    // Callback when a notification is received
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
-        Log.d("NotificationListener", "onNotificationPosted called with sbn: $sbn")
+
         if (sbn == null) return
 
         val notificationData = NotificationData.fromStatusBarNotification(sbn)
-        Log.d("NotificationListener", "Notification posted: ${notificationData.title} from ${sbn.packageName}")
 
-        if (notificationFilter.shouldBlock(notificationData)) {
-            Log.d("NotificationListener", "Blocking notification from ${sbn.packageName}")
-            // Uncomment to actively cancel the notification
-            // cancelNotification(sbn.packageName, sbn.tag, sbn.id)
-            return
-        }
+        Log.d(
+            "NotificationListener",
+            "Received notification from ${sbn.packageName}, clearable=${sbn.isClearable}"
+        )
 
+        // ALWAYS log first (even blocked ones)
         serviceScope.launch {
             try {
                 notificationLogger.logNotification(notificationData)
-                Log.d("NotificationListener", "Notification logged: ${notificationData.title}")
+                Log.d("NotificationListener", "Notification logged to DB")
             } catch (e: Exception) {
-                Log.e("NotificationListener", "Error logging notification", e)
+                Log.e("NotificationListener", "Failed to log notification", e)
             }
         }
+
+        // Decide whether to block
+//        if (notificationFilter.shouldBlock(notificationData)) {
+
+            if (sbn.isClearable) {
+                cancelNotification(sbn.key)
+                Log.d(
+                    "NotificationListener",
+                    "Notification cancelled: ${sbn.packageName}"
+                )
+            } else {
+                Log.d(
+                    "NotificationListener",
+                    "Notification NOT clearable (system protected)"
+                )
+            }
+
+            return
+//        }
     }
 
-    // Callback when a notification is removed
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         super.onNotificationRemoved(sbn)
-        Log.d("NotificationListener", "Notification removed: ${sbn?.notification?.extras?.getString("android.title")}")
+
+        Log.d(
+            "NotificationListener",
+            "Notification removed: ${sbn?.packageName}"
+        )
     }
 
     override fun onDestroy() {

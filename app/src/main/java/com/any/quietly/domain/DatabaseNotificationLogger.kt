@@ -16,12 +16,14 @@ class DatabaseNotificationLogger(
         try {
             withContext(dispatcher) {
                 repository.saveNotification(notificationData)
+                // Log debug
                 Log.d(
                     "DatabaseLogger",
                     "Notification logged successfully: ${notificationData.title}"
                 )
             }
         } catch (e: Exception) {
+            // Log error
             Log.e(
                 "DatabaseLogger",
                 "Failed to log notification: ${notificationData.title}",

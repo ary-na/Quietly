@@ -6,6 +6,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.Text
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -35,4 +37,20 @@ fun QuietlyTheme(
         typography = Typography,
         content = content
     )
+}
+
+@Preview(showBackground = true, name = "Light Theme")
+@Composable
+fun LightThemePreview() {
+    QuietlyTheme(darkTheme = false) {
+        Text("Preview Text")
+    }
+}
+
+@Preview(showBackground = true, name = "Dark Theme")
+@Composable
+fun DarkThemePreview() {
+    QuietlyTheme(darkTheme = true) {
+        Text("Preview Text")
+    }
 }

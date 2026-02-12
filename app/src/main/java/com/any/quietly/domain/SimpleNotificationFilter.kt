@@ -20,8 +20,9 @@ class SimpleNotificationFilter : NotificationFilter {
 
     override fun shouldBlock(notificationData: NotificationData): Boolean {
 
-        // Block if package name is in the blocked list
+        // Block if the package name is in the blocked list
         if (notificationData.packageName in blockedPackages) {
+            // Log debug
             Log.d(
                 "NotificationFilter",
                 "Blocking by package: ${notificationData.packageName}"
@@ -37,6 +38,7 @@ class SimpleNotificationFilter : NotificationFilter {
         for (keyword in blockedKeywords) {
             val normalizedKeyword = keyword.lowercase()
             if (title.contains(normalizedKeyword) || text.contains(normalizedKeyword)) {
+                // Log debug
                 Log.d(
                     "NotificationFilter",
                     "Blocking by keyword: $keyword"

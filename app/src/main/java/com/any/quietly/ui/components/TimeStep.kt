@@ -22,6 +22,26 @@ import androidx.compose.ui.unit.dp
 import java.util.Calendar
 import java.util.Locale
 
+private const val QUIET_WINDOW_DURATION_HOURS = 12
+
+private fun buildStartCalendar(hour: Int, minute: Int): Calendar {
+    val now = Calendar.getInstance()
+    val nowTruncatedToMinute = (now.clone() as Calendar).apply {
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    val startCalendar = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    if (startCalendar.before(nowTruncatedToMinute)) {
+        startCalendar.add(Calendar.DAY_OF_YEAR, 1)
+    }
+    return startCalendar
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeStep(
@@ -36,31 +56,24 @@ fun TimeStep(
 
     val endTime by remember {
         derivedStateOf {
-            val now = Calendar.getInstance()
-            val startCalendar = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, startTimePickerState.hour)
-                set(Calendar.MINUTE, startTimePickerState.minute)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }
-            if (startCalendar.before(now)) {
-                startCalendar.add(Calendar.DAY_OF_YEAR, 1)
-            }
+            val startCalendar = buildStartCalendar(
+                hour = startTimePickerState.hour,
+                minute = startTimePickerState.minute
+            )
             val endCalendar = startCalendar.clone() as Calendar
-            endCalendar.add(Calendar.HOUR_OF_DAY, 12)
+            endCalendar.add(Calendar.HOUR_OF_DAY, QUIET_WINDOW_DURATION_HOURS)
             endCalendar
         }
     }
     val startsTomorrow by remember {
         derivedStateOf {
             val now = Calendar.getInstance()
-            val startCalendar = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, startTimePickerState.hour)
-                set(Calendar.MINUTE, startTimePickerState.minute)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }
-            startCalendar.before(now)
+            val startCalendar = buildStartCalendar(
+                hour = startTimePickerState.hour,
+                minute = startTimePickerState.minute
+            )
+            now.get(Calendar.DAY_OF_YEAR) != startCalendar.get(Calendar.DAY_OF_YEAR)
+                    || now.get(Calendar.YEAR) != startCalendar.get(Calendar.YEAR)
         }
     }
 
@@ -96,16 +109,10 @@ fun TimeStep(
             }
             Button(
                 onClick = {
-                    val now = Calendar.getInstance()
-                    val startCalendar = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, startTimePickerState.hour)
-                        set(Calendar.MINUTE, startTimePickerState.minute)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-                    if (startCalendar.before(now)) {
-                        startCalendar.add(Calendar.DAY_OF_YEAR, 1)
-                    }
+                    val startCalendar = buildStartCalendar(
+                        hour = startTimePickerState.hour,
+                        minute = startTimePickerState.minute
+                    )
                     onNextClick(startCalendar.timeInMillis, endTime.timeInMillis)
                 }
             ) {

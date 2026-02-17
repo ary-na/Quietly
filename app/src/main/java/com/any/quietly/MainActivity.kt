@@ -1,6 +1,7 @@
 package com.any.quietly
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -14,7 +15,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.app.NotificationManagerCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -64,8 +64,17 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun isNotificationListenerEnabled(): Boolean {
-        return NotificationManagerCompat.getEnabledListenerPackages(this)
-            .contains(packageName)
+        val enabledComponents = Settings.Secure.getString(
+            contentResolver,
+            "enabled_notification_listeners"
+        ) ?: return false
+
+        val expectedComponent = ComponentName(
+            this,
+            com.any.quietly.service.NotificationListenerService::class.java
+        ).flattenToString()
+
+        return enabledComponents.split(':').any { it == expectedComponent }
     }
 
     private fun requestPostNotificationsIfNeeded() {

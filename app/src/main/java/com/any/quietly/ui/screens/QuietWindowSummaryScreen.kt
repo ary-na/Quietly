@@ -133,7 +133,17 @@ fun QuietWindowSummaryScreen(
                 Text("Logged Notifications:")
                 LazyColumn {
                     items(it.notifications) { notification ->
-                        NotificationItem(notification = notification, onDeleteClick = {})
+                        NotificationItem(
+                            notification = notification,
+                            onDeleteClick = { notificationId ->
+                                scope.launch {
+                                    repository.deleteNotification(notificationId)
+                                    snackbarHostState.showSnackbar(
+                                        message = "Notification deleted"
+                                    )
+                                }
+                            }
+                        )
                     }
                 }
             } ?: run {

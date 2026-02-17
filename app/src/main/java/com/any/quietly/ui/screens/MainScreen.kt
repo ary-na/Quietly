@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.any.quietly.R
@@ -23,10 +24,12 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.any.quietly.data.QuietWindow
 import com.any.quietly.repository.NotificationRepository
 import com.any.quietly.ui.components.CreateQuietWindowBottomSheet
+import com.any.quietly.util.NotificationHelper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.koin.compose.koinInject
@@ -76,13 +79,29 @@ fun MainScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddRuleClick
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(id = R.string.add_quiet_window_content_description)
-                )
+            Column(horizontalAlignment = Alignment.End) {
+                FloatingActionButton(
+                    onClick = onAddRuleClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(id = R.string.add_quiet_window_content_description)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                val context = LocalContext.current
+                FloatingActionButton(
+                    onClick = {
+                        val notificationHelper = NotificationHelper(context)
+                        notificationHelper.showSummaryNotification("Test", "This is a test notification.")
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Send Test Notification"
+                    )
+                }
             }
         }
     ) { paddingValues ->

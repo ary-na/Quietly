@@ -19,15 +19,16 @@ class RoomNotificationRepository(
 
     override suspend fun saveNotification(notificationData: NotificationData) {
         try {
+            val captureTime = System.currentTimeMillis()
             val activeQuietWindowId = quietWindowDao
-                .getActiveQuietWindow(notificationData.postTime)
+                .getActiveQuietWindow(captureTime)
                 ?.id
             val entity = NotificationEntity(
                 notificationId = notificationData.notificationId,
                 packageName = notificationData.packageName,
                 title = notificationData.title,
                 text = notificationData.text,
-                postTime = notificationData.postTime,
+                postTime = captureTime,
                 tag = notificationData.tag,
                 quietWindowId = activeQuietWindowId
             )

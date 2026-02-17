@@ -34,7 +34,6 @@ import com.any.quietly.ui.util.getInstalledApps
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.tooling.preview.Preview
-import android.graphics.Bitmap
 import androidx.compose.ui.res.stringResource
 import com.any.quietly.R
 import androidx.core.graphics.createBitmap
@@ -77,6 +76,12 @@ fun AppRow(
     isChecked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val iconBitmap = remember(app.icon) {
+        val width = app.icon.intrinsicWidth.takeIf { it > 0 } ?: 96
+        val height = app.icon.intrinsicHeight.takeIf { it > 0 } ?: 96
+        app.icon.toBitmap(width, height)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -91,7 +96,7 @@ fun AppRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            bitmap = app.icon.toBitmap().asImageBitmap(),
+            bitmap = iconBitmap.asImageBitmap(),
             contentDescription = app.appName,
             modifier = Modifier.size(40.dp)
         )

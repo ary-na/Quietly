@@ -18,7 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.* 
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -199,7 +199,7 @@ fun AppPickerScreen(
                     shape = RoundedCornerShape(50),
 
 
-                )
+                    )
             }
 
             // 📱 App list
@@ -226,6 +226,14 @@ fun AppPickerScreen(
                 enabled = selectedApps.any { it.value }
             ) {
                 Text(stringResource(id = R.string.save_button_text))
+            }
+            if (selectedApps.none { it.value }) {
+                Text(
+                    text = "Select at least one app to save.",
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
             }
         }
     }

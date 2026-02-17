@@ -18,8 +18,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.ui.tooling.preview.Preview
+import com.any.quietly.data.QuietWindow
+import com.any.quietly.repository.NotificationRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun NotificationListScreen(viewModel: NotificationViewModel = koinViewModel()) {
@@ -61,16 +65,38 @@ fun NotificationListScreenPreview() {
             postTime = System.currentTimeMillis()
         )
     )
-    val mockRepository = object : com.any.quietly.repository.NotificationRepository {
+    val mockRepository = object : NotificationRepository {
         override suspend fun saveNotification(notificationData: NotificationData) { /* Do nothing */
         }
 
-        override fun getAllNotifications(): StateFlow<List<NotificationData>> =
+        override fun getAllNotifications(): Flow<List<NotificationData>> =
             MutableStateFlow(mockNotifications)
 
         override suspend fun getAllNotificationsOnce(): List<NotificationData> = mockNotifications
         override suspend fun deleteNotification(id: Int) { /* Do nothing */
         }
+
+        override suspend fun saveQuietWindow(quietWindow: QuietWindow): Long {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun saveQuietWindowApps(quietWindowId: Int, packageNames: List<String>) {
+            TODO("Not yet implemented")
+        }
+
+        override fun getAllQuietWindows(): Flow<List<QuietWindow>> {
+            TODO("Not yet implemented")
+        }
+
+        override fun getQuietWindow(id: Int): Flow<QuietWindow?> {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun getActiveQuietWindowWithApps(timestamp: Long): com.any.quietly.data.QuietWindowWithApps? {
+            TODO("Not yet implemented")
+        }
+        override suspend fun clearNotificationsForQuietWindow(quietWindowId: Int) {}
+        override suspend fun deleteQuietWindow(id: Int) {}
     }
     val mockViewModel = object : NotificationViewModel(mockRepository) {
         override val loggedNotifications: StateFlow<List<NotificationData>> =

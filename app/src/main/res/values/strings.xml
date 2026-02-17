@@ -76,4 +76,5 @@
     <string name="select_apps_to_block_title">Select apps to block</string>
     <string name="search_content_description">Search</string>
     <string name="search_apps_placeholder">Search apps</string>
+    <string name="delete_quiet_window_content_description">Delete quiet window</string>
 </resources>

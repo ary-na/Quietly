@@ -20,4 +20,10 @@ interface NotificationDao {
 
     @Query("DELETE FROM notifications WHERE id = :id")
     suspend fun deleteNotification(id: Int) // For deletion
+
+    @Query("DELETE FROM notifications WHERE postTime >= :startTime AND postTime < :endTime")
+    suspend fun deleteNotificationsBetween(startTime: Long, endTime: Long)
+
+    @Query("DELETE FROM notifications WHERE quiet_window_id = :quietWindowId")
+    suspend fun deleteNotificationsForQuietWindow(quietWindowId: Int)
 }

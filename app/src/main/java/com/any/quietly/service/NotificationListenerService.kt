@@ -4,8 +4,8 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.any.quietly.data.NotificationData
-import com.any.quietly.domain.NotificationFilter
 import com.any.quietly.domain.NotificationLogger
+import com.any.quietly.repository.NotificationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -13,8 +13,8 @@ import org.koin.android.ext.android.inject
 
 class NotificationListenerService : NotificationListenerService() {
 
-//    private val notificationFilter: NotificationFilter by inject()
     private val notificationLogger: NotificationLogger by inject()
+    private val repository: NotificationRepository by inject()
 
     // Background scope for DB work
     private val serviceScope = CoroutineScope(Dispatchers.IO)
@@ -46,24 +46,26 @@ class NotificationListenerService : NotificationListenerService() {
             }
         }
 
-        // Decide whether to block
-//        if (notificationFilter.shouldBlock(notificationData)) {
-
-            if (sbn.isClearable) {
-                cancelNotification(sbn.key)
-                Log.d(
-                    "NotificationListener",
-                    "Notification cancelled: ${sbn.packageName}"
-                )
-            } else {
-                Log.d(
-                    "NotificationListener",
-                    "Notification NOT clearable (system protected)"
-                )
+        // Decide whether to block based on active quiet window + selected apps
+        serviceScope.launch {
+            val activeWindow = repository.getActiveQuietWindowWithApps(notificationData.postTime)
+                ?: return@launch
+            val selectedPackages = activeWindow.apps.map { it.packageName }.toSet()
+            if (selectedPackages.isNotEmpty() && notificationData.packageName in selectedPackages) {
+                if (sbn.isClearable) {
+                    cancelNotification(sbn.key)
+                    Log.d(
+                        "NotificationListener",
+                        "Notification cancelled: ${sbn.packageName}"
+                    )
+                } else {
+                    Log.d(
+                        "NotificationListener",
+                        "Notification NOT clearable (system protected)"
+                    )
+                }
             }
-
-            return
-//        }
+        }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {

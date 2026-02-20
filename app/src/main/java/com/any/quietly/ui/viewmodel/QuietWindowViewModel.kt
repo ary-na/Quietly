@@ -1,29 +1,24 @@
 package com.any.quietly.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.any.quietly.data.QuietWindow
-import com.any.quietly.domain.QuietWindowAlarmScheduler
 import com.any.quietly.repository.NotificationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class CreateQuietWindowState(
     val currentStep: Int = 1,
     val name: String = "",
-    val startTime: Long = 0,
-    val endTime: Long = 0,
+    val notificationCount: Int = 10,
     val selectedApps: Set<String> = emptySet()
 )
 
 class QuietWindowViewModel(
-    private val repository: NotificationRepository,
-    private val alarmScheduler: QuietWindowAlarmScheduler
+    private val repository: NotificationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateQuietWindowState())
@@ -35,8 +30,8 @@ class QuietWindowViewModel(
 
 
 
-    fun setTime(startTime: Long, endTime: Long) {
-        _uiState.update { it.copy(startTime = startTime, endTime = endTime) }
+    fun setNotificationCount(count: Int) {
+        _uiState.update { it.copy(notificationCount = count) }
     }
 
     fun setSelectedApps(packageNames: Set<String>) {
@@ -52,18 +47,15 @@ class QuietWindowViewModel(
     }
 
     suspend fun saveQuietWindow() {
-        // Perform the database and alarm scheduling on the IO dispatcher
+        // Persist the rule and selected apps off the main thread.
         withContext(Dispatchers.IO) {
             val currentState = _uiState.value
-            var quietWindow = QuietWindow(
+            val quietWindow = QuietWindow(
                 name = currentState.name,
-                startTime = currentState.startTime,
-                endTime = currentState.endTime
+                notificationCount = currentState.notificationCount
             )
             val newId = repository.saveQuietWindow(quietWindow)
-            quietWindow = quietWindow.copy(id = newId.toInt())
             repository.saveQuietWindowApps(newId.toInt(), currentState.selectedApps.toList())
-            alarmScheduler.schedule(quietWindow)
         }
 
         // Once the background work is done, reset the state on the main thread.

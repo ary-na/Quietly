@@ -38,7 +38,7 @@ open class NotificationViewModel(private val repository: NotificationRepository)
     fun addNotification(notificationData: NotificationData) {
         viewModelScope.launch {
             try {
-                repository.saveNotification(notificationData)
+                repository.saveNotification(notificationData, quietWindowId = null)
                 // No need to reload manually, the Flow from the repository will update the StateFlow
             } catch (e: Exception) {
                 println("Error adding notification: $e")

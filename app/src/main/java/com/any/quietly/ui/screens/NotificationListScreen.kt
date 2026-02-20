@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.ui.tooling.preview.Preview
 import com.any.quietly.data.QuietWindow
+import com.any.quietly.data.QuietWindowWithApps
 import com.any.quietly.repository.NotificationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,36 +67,32 @@ fun NotificationListScreenPreview() {
         )
     )
     val mockRepository = object : NotificationRepository {
-        override suspend fun saveNotification(notificationData: NotificationData) { /* Do nothing */
+        override suspend fun saveNotification(
+            notificationData: NotificationData,
+            quietWindowId: Int?
+        ) { /* Do nothing */
         }
 
         override fun getAllNotifications(): Flow<List<NotificationData>> =
             MutableStateFlow(mockNotifications)
 
         override suspend fun getAllNotificationsOnce(): List<NotificationData> = mockNotifications
+        override suspend fun getNotificationsForQuietWindow(quietWindowId: Int): List<NotificationData> = emptyList()
         override suspend fun deleteNotification(id: Int) { /* Do nothing */
         }
 
-        override suspend fun saveQuietWindow(quietWindow: QuietWindow): Long {
-            TODO("Not yet implemented")
-        }
+        override suspend fun saveQuietWindow(quietWindow: QuietWindow): Long = 1L
 
-        override suspend fun saveQuietWindowApps(quietWindowId: Int, packageNames: List<String>) {
-            TODO("Not yet implemented")
-        }
+        override suspend fun saveQuietWindowApps(quietWindowId: Int, packageNames: List<String>) {}
 
-        override fun getAllQuietWindows(): Flow<List<QuietWindow>> {
-            TODO("Not yet implemented")
-        }
+        override fun getAllQuietWindows(): Flow<List<QuietWindow>> = flowOf(emptyList())
 
-        override fun getQuietWindow(id: Int): Flow<QuietWindow?> {
-            TODO("Not yet implemented")
-        }
+        override fun getQuietWindow(id: Int): Flow<QuietWindow?> = flowOf(null)
 
-        override suspend fun getActiveQuietWindowWithApps(timestamp: Long): com.any.quietly.data.QuietWindowWithApps? {
-            TODO("Not yet implemented")
-        }
+        override suspend fun getQuietWindowsWithApps(): List<QuietWindowWithApps> = emptyList()
+        override suspend fun getNotificationCountForQuietWindow(quietWindowId: Int): Int = 0
         override suspend fun clearNotificationsForQuietWindow(quietWindowId: Int) {}
+        override suspend fun setQuietWindowEnabled(id: Int, enabled: Boolean) {}
         override suspend fun deleteQuietWindow(id: Int) {}
     }
     val mockViewModel = object : NotificationViewModel(mockRepository) {

@@ -5,7 +5,6 @@ import com.any.quietly.data.AppDatabase
 import com.any.quietly.domain.DatabaseNotificationLogger
 import com.any.quietly.domain.GeminiNotificationSummarizer
 import com.any.quietly.domain.NotificationLogger
-import com.any.quietly.domain.QuietWindowAlarmScheduler
 import com.any.quietly.repository.NotificationRepository
 import com.any.quietly.repository.RoomNotificationRepository
 import com.any.quietly.ui.viewmodel.NotificationViewModel
@@ -21,17 +20,22 @@ val appModule = module {
             androidContext(),
             AppDatabase::class.java, "quietly-db"
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6
+            )
             .build()
     }
     single { get<AppDatabase>().notificationDao() }
     single { get<AppDatabase>().quietWindowDao() }
     single<NotificationRepository> { RoomNotificationRepository(get(), get()) }
-    single { QuietWindowAlarmScheduler(androidContext()) }
     single { GeminiNotificationSummarizer() }
     single { NotificationHelper(androidContext()) }
     single<NotificationLogger> { DatabaseNotificationLogger(get()) }
 
     viewModel { NotificationViewModel(get()) }
-    viewModel { QuietWindowViewModel(get(), get()) }
+    viewModel { QuietWindowViewModel(get()) }
 }

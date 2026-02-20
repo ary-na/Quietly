@@ -22,25 +22,27 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.rememberCoroutineScope
+import com.any.quietly.data.NotificationData
 import com.any.quietly.repository.NotificationRepository
 import org.koin.compose.koinInject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import com.any.quietly.domain.QuietWindowAlarmScheduler
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.res.stringResource
 import com.any.quietly.R
-import androidx.compose.runtime.remember
 import androidx.compose.foundation.shape.RoundedCornerShape
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,11 +52,16 @@ fun QuietWindowSummaryScreen(
     onNavigateUp: () -> Unit,
     onNavigateHome: () -> Unit,
     repository: NotificationRepository = koinInject(),
-    alarmScheduler: QuietWindowAlarmScheduler = koinInject(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val quietWindow by repository.getQuietWindow(quietWindowId).collectAsState(initial = null)
     val scope = rememberCoroutineScope()
+    var notifications by remember { mutableStateOf<List<NotificationData>>(emptyList()) }
+    var refreshTick by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(quietWindowId, refreshTick) {
+        notifications = repository.getNotificationsForQuietWindow(quietWindowId)
+    }
 
     Scaffold(
         topBar = {
@@ -73,7 +80,6 @@ fun QuietWindowSummaryScreen(
                         onClick = {
                             val window = quietWindow ?: return@IconButton
                             scope.launch {
-                                alarmScheduler.cancel(window)
                                 repository.deleteQuietWindow(window.id)
                                 onNavigateHome()
                                 launch {
@@ -126,18 +132,40 @@ fun QuietWindowSummaryScreen(
             quietWindow?.let {
                 Text("Name: ${it.name}")
                 Spacer(modifier = Modifier.height(8.dp))
-                val startTime = formatTime(it.startTime)
-                val endTime = formatTime(it.endTime)
-                Text("Time: $startTime - $endTime")
+                Text("Summary threshold: ${it.notificationCount} notifications")
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    if (it.isEnabled) {
+                        "Status: Quiet mode active"
+                    } else {
+                        "Status: Paused (notifications now pass through normally)"
+                    }
+                )
+                if (!it.isEnabled) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                repository.clearNotificationsForQuietWindow(it.id)
+                                repository.setQuietWindowEnabled(it.id, true)
+                                refreshTick += 1
+                                snackbarHostState.showSnackbar("Quiet mode restarted")
+                            }
+                        }
+                    ) {
+                        Text("Redo / Restart Quiet Mode")
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("Logged Notifications:")
                 LazyColumn {
-                    items(it.notifications) { notification ->
+                    items(notifications) { notification ->
                         NotificationItem(
                             notification = notification,
                             onDeleteClick = { notificationId ->
                                 scope.launch {
                                     repository.deleteNotification(notificationId)
+                                    refreshTick += 1
                                     snackbarHostState.showSnackbar(
                                         message = "Notification deleted"
                                     )
@@ -151,9 +179,4 @@ fun QuietWindowSummaryScreen(
             }
         }
     }
-}
-
-private fun formatTime(timeInMillis: Long): String {
-    val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    return dateFormat.format(Date(timeInMillis))
 }

@@ -33,9 +33,9 @@ fun CreateQuietWindowBottomSheet(
                         viewModel.nextStep()
                     }
                 )
-                2 -> TimeStep(
-                    onNextClick = { startTime, endTime ->
-                        viewModel.setTime(startTime, endTime)
+                2 -> NotificationCountStep(
+                    onNextClick = { count ->
+                        viewModel.setNotificationCount(count)
                         viewModel.nextStep()
                     },
                     onBackClick = { viewModel.previousStep() }

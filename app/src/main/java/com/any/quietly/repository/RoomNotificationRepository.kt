@@ -17,20 +17,16 @@ class RoomNotificationRepository(
     private val quietWindowDao: QuietWindowDao
 ) : NotificationRepository {
 
-    override suspend fun saveNotification(notificationData: NotificationData) {
+    override suspend fun saveNotification(notificationData: NotificationData, quietWindowId: Int?) {
         try {
-            val captureTime = System.currentTimeMillis()
-            val activeQuietWindowId = quietWindowDao
-                .getActiveQuietWindow(captureTime)
-                ?.id
             val entity = NotificationEntity(
                 notificationId = notificationData.notificationId,
                 packageName = notificationData.packageName,
                 title = notificationData.title,
                 text = notificationData.text,
-                postTime = captureTime,
+                postTime = notificationData.postTime,
                 tag = notificationData.tag,
-                quietWindowId = activeQuietWindowId
+                quietWindowId = quietWindowId
             )
             notificationDao.insert(entity)
             Log.d(
@@ -58,6 +54,20 @@ class RoomNotificationRepository(
             }
         }
     }
+    
+    override suspend fun getNotificationsForQuietWindow(quietWindowId: Int): List<NotificationData> {
+        return notificationDao.getNotificationsForQuietWindow(quietWindowId).map { entity ->
+            NotificationData(
+                id = entity.id,
+                notificationId = entity.notificationId,
+                packageName = entity.packageName,
+                title = entity.title,
+                text = entity.text,
+                postTime = entity.postTime,
+                tag = entity.tag
+            )
+        }
+    }
 
     override suspend fun getAllNotificationsOnce(): List<NotificationData> {
         return notificationDao.getAllNotificationsOnce().map { entity ->
@@ -80,8 +90,8 @@ class RoomNotificationRepository(
     override suspend fun saveQuietWindow(quietWindow: QuietWindow): Long {
         val entity = QuietWindowEntity(
             name = quietWindow.name,
-            startTime = quietWindow.startTime,
-            endTime = quietWindow.endTime
+            notificationCount = quietWindow.notificationCount,
+            isEnabled = quietWindow.isEnabled
         )
         return quietWindowDao.insertQuietWindow(entity)
     }
@@ -98,59 +108,45 @@ class RoomNotificationRepository(
     }
 
     override fun getAllQuietWindows(): Flow<List<QuietWindow>> {
-        return quietWindowDao.getAllQuietWindowsWithNotifications().map { entities ->
+        return quietWindowDao.getAllQuietWindows().map { entities ->
             entities.map {
                 QuietWindow(
-                    id = it.quietWindow.id,
-                    name = it.quietWindow.name,
-                    startTime = it.quietWindow.startTime,
-                    endTime = it.quietWindow.endTime,
-                    notifications = it.notifications.map { notificationEntity ->
-                        NotificationData(
-                            id = notificationEntity.id,
-                            notificationId = notificationEntity.notificationId,
-                            packageName = notificationEntity.packageName,
-                            title = notificationEntity.title,
-                            text = notificationEntity.text,
-                            postTime = notificationEntity.postTime,
-                            tag = notificationEntity.tag
-                        )
-                    }
+                    id = it.id,
+                    name = it.name,
+                    notificationCount = it.notificationCount,
+                    isEnabled = it.isEnabled
                 )
             }
         }
     }
 
     override fun getQuietWindow(id: Int): Flow<QuietWindow?> {
-        return quietWindowDao.getQuietWindowWithNotifications(id).map {
+        return quietWindowDao.getQuietWindow(id).map {
             it?.let {
                 QuietWindow(
-                    id = it.quietWindow.id,
-                    name = it.quietWindow.name,
-                    startTime = it.quietWindow.startTime,
-                    endTime = it.quietWindow.endTime,
-                    notifications = it.notifications.map { notificationEntity ->
-                        NotificationData(
-                            id = notificationEntity.id,
-                            notificationId = notificationEntity.notificationId,
-                            packageName = notificationEntity.packageName,
-                            title = notificationEntity.title,
-                            text = notificationEntity.text,
-                            postTime = notificationEntity.postTime,
-                            tag = notificationEntity.tag
-                        )
-                    }
+                    id = it.id,
+                    name = it.name,
+                    notificationCount = it.notificationCount,
+                    isEnabled = it.isEnabled
                 )
             }
         }
     }
 
-    override suspend fun getActiveQuietWindowWithApps(timestamp: Long): QuietWindowWithApps? {
-        return quietWindowDao.getActiveQuietWindowWithApps(timestamp)
+    override suspend fun getQuietWindowsWithApps(): List<QuietWindowWithApps> {
+        return quietWindowDao.getQuietWindowsWithApps()
+    }
+    
+    override suspend fun getNotificationCountForQuietWindow(quietWindowId: Int): Int {
+        return notificationDao.getNotificationCountForQuietWindow(quietWindowId)
     }
 
     override suspend fun clearNotificationsForQuietWindow(quietWindowId: Int) {
         notificationDao.deleteNotificationsForQuietWindow(quietWindowId)
+    }
+
+    override suspend fun setQuietWindowEnabled(id: Int, enabled: Boolean) {
+        quietWindowDao.setQuietWindowEnabled(id, enabled)
     }
 
     override suspend fun deleteQuietWindow(id: Int) {

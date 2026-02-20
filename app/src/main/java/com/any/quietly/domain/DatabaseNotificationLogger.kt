@@ -15,7 +15,7 @@ class DatabaseNotificationLogger(
     override suspend fun logNotification(notificationData: NotificationData) {
         try {
             withContext(dispatcher) {
-                repository.saveNotification(notificationData)
+                repository.saveNotification(notificationData, quietWindowId = null)
                 // Log debug
                 Log.d(
                     "DatabaseLogger",

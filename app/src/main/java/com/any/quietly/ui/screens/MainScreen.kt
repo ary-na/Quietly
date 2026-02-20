@@ -30,12 +30,10 @@ import com.any.quietly.data.QuietWindow
 import com.any.quietly.repository.NotificationRepository
 import com.any.quietly.ui.components.CreateQuietWindowBottomSheet
 import com.any.quietly.util.NotificationHelper
+import com.any.quietly.data.QuietWindowWithApps
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.koin.compose.koinInject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -135,16 +133,14 @@ fun QuietWindowItem(quietWindow: QuietWindow, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = quietWindow.name, style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(4.dp))
-            val startTime = formatTime(quietWindow.startTime)
-            val endTime = formatTime(quietWindow.endTime)
-            Text(text = "From $startTime to $endTime")
+            Text(text = "Summarize after ${quietWindow.notificationCount} notifications")
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = if (quietWindow.isEnabled) "Status: Active" else "Status: Paused",
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
-}
-
-private fun formatTime(timeInMillis: Long): String {
-    val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    return dateFormat.format(Date(timeInMillis))
 }
 
 @Composable
@@ -184,21 +180,27 @@ fun EmptyState(paddingValues: PaddingValues) {
 @Preview(showBackground = true)
 fun MainScreenPreview() {
     val mockRepository = object : NotificationRepository {
-        override suspend fun saveNotification(notificationData: com.any.quietly.data.NotificationData) {}
+        override suspend fun saveNotification(
+            notificationData: com.any.quietly.data.NotificationData,
+            quietWindowId: Int?
+        ) {}
         override fun getAllNotifications(): Flow<List<com.any.quietly.data.NotificationData>> = flowOf(emptyList())
         override suspend fun getAllNotificationsOnce(): List<com.any.quietly.data.NotificationData> = emptyList()
+        override suspend fun getNotificationsForQuietWindow(quietWindowId: Int): List<com.any.quietly.data.NotificationData> = emptyList()
         override suspend fun deleteNotification(id: Int) {}
         override suspend fun saveQuietWindow(quietWindow: QuietWindow): Long = 1L
         override suspend fun saveQuietWindowApps(quietWindowId: Int, packageNames: List<String>) {}
         override fun getAllQuietWindows(): Flow<List<QuietWindow>> = flowOf(
             listOf(
-                QuietWindow(id = 1, name = "Work", startTime = 1678886400000, endTime = 1678929600000),
-                QuietWindow(id = 2, name = "Study", startTime = 1678915200000, endTime = 1678958400000)
+                QuietWindow(id = 1, name = "Work", notificationCount = 10),
+                QuietWindow(id = 2, name = "Study", notificationCount = 5, isEnabled = false)
             )
         )
         override fun getQuietWindow(id: Int): Flow<QuietWindow?> = flowOf(null)
-        override suspend fun getActiveQuietWindowWithApps(timestamp: Long): com.any.quietly.data.QuietWindowWithApps? = null
+        override suspend fun getQuietWindowsWithApps(): List<QuietWindowWithApps> = emptyList()
+        override suspend fun getNotificationCountForQuietWindow(quietWindowId: Int): Int = 0
         override suspend fun clearNotificationsForQuietWindow(quietWindowId: Int) {}
+        override suspend fun setQuietWindowEnabled(id: Int, enabled: Boolean) {}
         override suspend fun deleteQuietWindow(id: Int) {}
     }
     MainScreen(onQuietWindowClick = {}, repository = mockRepository)

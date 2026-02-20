@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [NotificationEntity::class, QuietWindowEntity::class, QuietWindowAppEntity::class],
-    version = 3,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -49,6 +49,122 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL(
                     "CREATE INDEX IF NOT EXISTS index_quiet_window_apps_package_name ON quiet_window_apps(package_name)"
                 )
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                var hasNotificationCount = false
+                database.query("PRAGMA table_info(quiet_windows)").use { cursor ->
+                    val nameIndex = cursor.getColumnIndex("name")
+                    while (cursor.moveToNext()) {
+                        if (nameIndex >= 0 && cursor.getString(nameIndex) == "notificationCount") {
+                            hasNotificationCount = true
+                            break
+                        }
+                    }
+                }
+
+                database.execSQL("PRAGMA foreign_keys=OFF")
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS quiet_windows_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        notificationCount INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+
+                if (hasNotificationCount) {
+                    database.execSQL(
+                        """
+                        INSERT INTO quiet_windows_new (id, name, notificationCount)
+                        SELECT id, name, notificationCount
+                        FROM quiet_windows
+                        """.trimIndent()
+                    )
+                } else {
+                    database.execSQL(
+                        """
+                        INSERT INTO quiet_windows_new (id, name, notificationCount)
+                        SELECT id, name, 10
+                        FROM quiet_windows
+                        """.trimIndent()
+                    )
+                }
+
+                database.execSQL("DROP TABLE quiet_windows")
+                database.execSQL("ALTER TABLE quiet_windows_new RENAME TO quiet_windows")
+                database.execSQL("PRAGMA foreign_keys=ON")
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                var hasNotificationCount = false
+                database.query("PRAGMA table_info(quiet_windows)").use { cursor ->
+                    val nameIndex = cursor.getColumnIndex("name")
+                    while (cursor.moveToNext()) {
+                        if (nameIndex >= 0 && cursor.getString(nameIndex) == "notificationCount") {
+                            hasNotificationCount = true
+                            break
+                        }
+                    }
+                }
+
+                database.execSQL("PRAGMA foreign_keys=OFF")
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS quiet_windows_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        notificationCount INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+
+                if (hasNotificationCount) {
+                    database.execSQL(
+                        """
+                        INSERT INTO quiet_windows_new (id, name, notificationCount)
+                        SELECT id, name, notificationCount
+                        FROM quiet_windows
+                        """.trimIndent()
+                    )
+                } else {
+                    database.execSQL(
+                        """
+                        INSERT INTO quiet_windows_new (id, name, notificationCount)
+                        SELECT id, name, 10
+                        FROM quiet_windows
+                        """.trimIndent()
+                    )
+                }
+
+                database.execSQL("DROP TABLE quiet_windows")
+                database.execSQL("ALTER TABLE quiet_windows_new RENAME TO quiet_windows")
+                database.execSQL("PRAGMA foreign_keys=ON")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                var hasEnabledColumn = false
+                database.query("PRAGMA table_info(quiet_windows)").use { cursor ->
+                    val nameIndex = cursor.getColumnIndex("name")
+                    while (cursor.moveToNext()) {
+                        if (nameIndex >= 0 && cursor.getString(nameIndex) == "is_enabled") {
+                            hasEnabledColumn = true
+                            break
+                        }
+                    }
+                }
+                if (!hasEnabledColumn) {
+                    database.execSQL(
+                        "ALTER TABLE quiet_windows ADD COLUMN is_enabled INTEGER NOT NULL DEFAULT 1"
+                    )
+                }
             }
         }
     }
